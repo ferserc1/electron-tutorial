@@ -1,0 +1,20 @@
+{
+  "name": "electron-tutorial",
+  "version": "1.0.0",
+  "description": "bg2 scene download tool",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "bg2",
+    "engine",
+    "scene",
+    "download"
+  ],
+  "author": "Fernando Serrano Carpena",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^18.0.1"
+  }
+}
