@@ -5,10 +5,14 @@ const fs = require('fs');
 contextBridge.exposeInMainWorld('myAPI', {
     async writeFile(path, content, options) {
         return await fs.promises.writeFile(path, content, options);
+    },
+
+    getDependencyVersion(name) {
+        return process.versions[name];
     }
 });
 
-window.addEventListener('DOMContentLoaded', () => {
+/*window.addEventListener('DOMContentLoaded', () => {
     const replaceText = (selector, text) => {
         const element = document.getElementById(selector);
         if (element) {
@@ -22,3 +26,4 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 });
+*/
