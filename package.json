@@ -4,7 +4,8 @@
   "description": "bg2 scene download tool",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "rollup -c --watch"
   },
   "keywords": [
     "bg2",

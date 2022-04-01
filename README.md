@@ -248,4 +248,226 @@ myAPI.writeFile('test.txt','Hello, World!',{encoding: 'utf-8'})
     .catch(err => alert(err.message));
 ```
 
+## Añadir un framework para la interfaz de usuario: svelte
+
+### Ordenar los ficheros
+
+Antes vamos a reorganizar los ficheros siguiendo la siguiente estructura:
+
+```other
+src
+ |- preload
+ | |- index.js  < mover aquí el fichero preload.js
+ |- renderer
+   |- index.js  < mover aquí el fichero renderer.js
+```
+
+Ahora modificamos la referencia al archivo `preload.js`, pero no hacemos nada con la referencia a `renderer.js`. Esa parte la haremos más adelante.
+
+**main.js:**
+
+```js
+const createWindow = () => {
+    const win = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+            preload: path.join(__dirname, 'src/preload/index.js')
+        }
+    });
+    ...
+```
+
+### Instalar dependencias
+
+Vamos a añadir las siguientes dependencias de desarrollo y de producción:
+
+```sh
+npm install --save svelte
+npm install --save-dev rollup rollup-plugin-css-only rollup-plugin-livereload rollup-plugin-string rollup-plugin-svelte rollup-plugin-terser @rollup/plugin-commonjs @rollup/plugin-node-resolve
+```
+
+Y añadimos el fichero `rollup.config.js` a la raíz del proyecto. Tanto las dependencias que hemos instalado, como el siguiente archivo de configuración, están extraídos de la plantilla básica por defecto del proyecto [Svelte](https://svelte.dev/), que es un framework reactivo similar a React, pero bastante más sencillo de usar
+
+**rollup.config.js:**
+
+```js
+import svelte from 'rollup-plugin-svelte';
+import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
+import { terser } from 'rollup-plugin-terser';
+import css from 'rollup-plugin-css-only';
+
+const production = !process.env.ROLLUP_WATCH;
+
+export default {
+    // Fichero de entrada principal. Es el punto de
+    // entrada del código de nuestra aplicación
+	input: 'src/renderer/index.js',
+
+	output: {
+		sourcemap: true,
+		format: 'iife',
+		name: 'app',
+        // Fichero de salida JavaScript: lo incluiremos
+        // en el archivo index.html
+		file: 'build/renderer.js'
+	},
+	plugins: [
+
+		svelte({
+			compilerOptions: {
+				dev: !production
+			}
+		}),
+
+        // Fichero de salida CSS: lo incluiremos en
+        // el archivo index.html
+		css({ output: 'renderer.css' }),
+
+		resolve({
+			browser: true,
+			dedupe: ['svelte']
+		}),
+		commonjs(),
+
+		production && terser()
+	],
+	watch: {
+		clearScreen: false
+	}
+};
+```
+
+En el fichero de configuración anterior estamos especificando que el código generado para nuestro renderer debe generarse en `build/renderer.js`. Observa que en el tag `<script>` hemos añadido también el atributo `type="module"`. Así que editamos el fichero `index.html` para incluir esta ruta. También se especifica que el fichero `.css` que se generará del código, se va a colocar en el fichero `renderer.css`. Este fichero se coloca a su vez en el directorio de salida, en `build`. Así que también añadiremos esta referencia en el fichero `index.html`. Y ya que estamos, vamos a añadir también un fichero para hojas de estilo globales, que crearemos en la ruta `css/global.css`. Por último, hemos eliminado el contenido del body de la página, ya que este contenido lo vamos a generar con la vista de Svelte:
+
+**css/global.css:**
+
+```css
+html {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+```
+
+**index.html:**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <title>Document</title>
+
+    <!-- hojas de estilo, build/renderer.css lo genera
+         por nosotros el compilador de Svelte -->
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="build/renderer.css">
+</head>
+<body>
+
+    <!-- renderer, que lo genera Svelte mediante 
+         el sistema de building (rollup) -->
+    <script src="./build/renderer.js" type="module"></script>
+</body>
+</html>
+```
+
+### Añadir una vista de Svelte
+
+Vamos a añadir una vista. Para ello, creamos un fichero `.svelte` en `src/renderer/views`:
+
+**src/renderer/views/App.svelte:**
+
+```svelte
+<script>
+    export let name;
+
+    let textValue = "Enter a text here";
+
+    const saveToFile = async () => {
+        await window.myAPI.writeFile('test.txt',textValue,{encoding:'utf-8'});
+    }
+
+</script>
+
+<h1>Hello, {name}</h1>
+We are using Node.js <span>{window.myAPI.getDependencyVersion('node')}</span>,
+Chromium <span>{window.myAPI.getDependencyVersion('chrome')}</span>
+and Electron <span>{window.myAPI.getDependencyVersion('electron')}</span>
+
+<input type="text" bind:value={textValue} />
+<button on:click={async () => await saveToFile()}>Save file</button>
+<style>
+    h1 {
+        font-family: sans-serif;
+    }
+
+</style>
+```
+
+Ahora modificaremos el fichero `index.js` del renderer para incluir la vista de Svelte que acabamos de añadir:
+
+**src/renderer/index.js:**
+
+```js
+import App from './views/App.svelte';
+
+new App({
+    target: document.body,
+    props: {
+        name: 'World'
+    }
+})
+```
+
+Por último, modificamos el API que hemos creado añadiendo una función con la que obtener desde el proceso principal, los números de versión de cada framework:
+
+**src/preload/index.js:**
+
+```js
+const { contextBridge } = require('electron');
+const fs = require('fs');
+
+contextBridge.exposeInMainWorld('myAPI', {
+    async writeFile(path, content, options) {
+        return await fs.promises.writeFile(path, content, options);
+    },
+
+    getDependencyVersion(name) {
+        return process.versions[name];
+    }
+});
+```
+
+Si observas detenidamente el código de la vista de Svelte, verás que puedes acceder al objeto `myAPI` mediante el objeto global `window`:
+
+```svelte
+<script>
+    ...
+    const saveToFile = async () => {
+        await window.myAPI.writeFile('test.txt',textValue,{encoding:'utf-8'});
+    }
+</script>
+...
+<span>{window.myAPI.getDependencyVersion('electron')}</span>
+```
+
+### Script de compilación
+
+Para facilitar el trabajo, podemos añadir el siguiente script de compilación al fichero `package.json`:
+
+```json
+{
+    ...
+    "scripts": {
+        ...
+        "build": "rollup -c --watch"
+    },
+    ...
+}
+```
+
+Al ejecutar `npm run build`, rollup se quedará esperando cambios en los ficheros de código fuente del renderer. Independientemente de esto, puedes ejecutar el depurador de Visual Studio para lanzar tu app. Ten en cuenta que al incluir Svelte, no podrás depurar directamente los ficheros del renderer en Visual Studio Code, pero si que podrás hacerlo utilizando las herramientas de desarrollo de Electron en la ventana de tu app. La configuración de rollup se encarga de generar los ficheros `.map` para facilitar la depuración.
 
