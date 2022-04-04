@@ -485,3 +485,42 @@ npx electron-forge import
 
 El comando `electron-forge import` modifica el ficehro `package.json` para añadir las dependencias requeridas por `electron-forge` para empaquetar la aplicación. También le añade scripts que usaremos más adelante para generar las versiones de distribución.
 
+Para empaquetar la aplicación, basta con ejecutar el script siguiente:
+
+```sh
+npm run make
+```
+
+El problema es que este script que ha generado `electron-forge` no tiene en cuenta que estamos usando rollup para construir los ficheros de la aplicación, así que si no compilamos manualmente el código, la aplicación generada no incluirá los últimos cambios. Para solucionar esto, podemos modificar el script que genera `electron-forge` para añadir la fase de compilación:
+
+**package.json:** Modificamos los scripts originales siguientes:
+
+```json
+{
+    ...
+    "scripts": {
+        "start": "electron-forge start",
+        "build": "rollup -c --watch",
+        "package": "electron-forge package",
+        "make": "electron-forge make"
+    },
+    ... 
+}
+```
+
+**package.json:** Para incluir la compilación con electron forge tal y como sigue:
+
+```json
+{
+    ...
+    "scripts": {
+        "start": "npm run build && electron-forge start",
+        "dev": "rollup -c --watch",
+        "build": "rollup -c",
+        "package": "npm run build && electron-forge package",
+        "make": "npm run build && electron-forge make"
+    },
+    ... 
+}
+```
+
