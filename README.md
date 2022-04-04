@@ -482,3 +482,6 @@ Instalar y guardar como dependencia de desarrollo el paquete `electron-forge`, y
 npm install --svae-dev @electron-forge/cli
 npx electron-forge import
 ```
+
+El comando `electron-forge import` modifica el ficehro `package.json` para añadir las dependencias requeridas por `electron-forge` para empaquetar la aplicación. También le añade scripts que usaremos más adelante para generar las versiones de distribución.
+

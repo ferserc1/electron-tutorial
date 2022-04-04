@@ -4,8 +4,10 @@
   "description": "bg2 scene download tool",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "build": "rollup -c --watch"
+    "start": "electron-forge start",
+    "build": "rollup -c --watch",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "keywords": [
     "bg2",
@@ -17,6 +19,10 @@
   "license": "MIT",
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.63",
+    "@electron-forge/maker-deb": "^6.0.0-beta.63",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.63",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.63",
+    "@electron-forge/maker-zip": "^6.0.0-beta.63",
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
     "electron": "^18.0.1",
@@ -28,6 +34,34 @@
     "rollup-plugin-terser": "^7.0.0"
   },
   "dependencies": {
+    "electron-squirrel-startup": "^1.0.0",
     "svelte": "^3.46.5"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "electron_tutorial"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
   }
 }
