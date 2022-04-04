@@ -6,6 +6,8 @@ Este es un tutorial para crear una aplicación Electron, y depurarla con Visual 
 
 Este tutorial está realizado con Node.js versión 16 y Electron 18. Electron no es un prerequisito, se instalará utilizando npm de forma local al proyecto, con lo que solamente es necesario instalar Node 16 y Visual Studio Code
 
+**NOTA IMPORTANTE:** hasta el momento me ha sido imposible importar módulos ES en el proceso `main` y en el script `preload` (ver más adelante). Hay que tenerlo en cuenta por si va a ser necesario utilizar bibliotecas que estén generadas solamente como módulos ES.
+
 ## Proyecto básico
 
 Después de crear el fichero `package.json` con `npm init`, instalamos Electron como dependencia de desarrollo y configuramos el script de inicio y el fichero principal:
@@ -471,3 +473,12 @@ Para facilitar el trabajo, podemos añadir el siguiente script de compilación a
 
 Al ejecutar `npm run build`, rollup se quedará esperando cambios en los ficheros de código fuente del renderer. Independientemente de esto, puedes ejecutar el depurador de Visual Studio para lanzar tu app. Ten en cuenta que al incluir Svelte, no podrás depurar directamente los ficheros del renderer en Visual Studio Code, pero si que podrás hacerlo utilizando las herramientas de desarrollo de Electron en la ventana de tu app. La configuración de rollup se encarga de generar los ficheros `.map` para facilitar la depuración.
 
+
+## Distribución
+
+Instalar y guardar como dependencia de desarrollo el paquete `electron-forge`, y ejecutar `electron-forge import` con `npx`.
+
+```sh
+npm install --svae-dev @electron-forge/cli
+npx electron-forge import
+```
